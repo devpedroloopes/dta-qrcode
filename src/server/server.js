@@ -2,16 +2,20 @@ const express = require("express");
 const nodemailer = require("nodemailer");
 const cors = require("cors");
 
+// Carregando as variáveis de ambiente
+const dotenv = require("dotenv");
+dotenv.config();
+
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Configuração do transporter do Nodemailer
+// Configuração do transporter do Nodemailer usando as variáveis de ambiente
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: "pedro.hsl2003@gmail.com", // Seu e-mail
-    pass: "lygv qhvk bkgo ljpu", // Senha de aplicativo
+    user: process.env.USER_EMAIL, // Usando a variável de ambiente para o e-mail
+    pass: process.env.EMAIL_PASSWORD, // Usando a variável de ambiente para a senha de aplicativo
   },
 });
 
@@ -24,7 +28,7 @@ app.post("/send-email", async (req, res) => {
   }
 
   const mailOptions = {
-    from: "pedro.hsl2003@gmail.com",
+    from: process.env.USER_EMAIL, // Usando a variável de ambiente para o e-mail
     to: email,
     subject: "Aviso de Visita Técnica",
     text: "O técnico realizou a visita no local.",
