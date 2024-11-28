@@ -2,15 +2,16 @@ import React, { useState, useRef } from "react";
 import { StyleSheet, View, Text, Modal, TouchableOpacity, Alert } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import axios from "axios"; // Já importado para fazer chamadas HTTP
+import axios from "axios";
+
+const API_URL = "https://dta-qrcode.onrender.com"; 
 
 export default function QRCodeScannerScreen() {
   const [modalIsVisible, setModalIsVisible] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
-  const [email, setEmail] = useState<string | null>(null); // Armazena o e-mail lido
+  const [email, setEmail] = useState<string | null>(null);
   const qrCodeLock = useRef(false);
 
-  // Função que abre a câmera
   async function handleOpenCamera() {
     try {
       const { granted } = await requestPermission();
@@ -26,19 +27,16 @@ export default function QRCodeScannerScreen() {
     }
   }
 
-  // Função chamada quando o QR Code é lido
   function handleQRCodeRead(data: string) {
-    setEmail(data); // Armazena o e-mail lido do QR Code
-    setModalIsVisible(false); // Fecha a câmera
+    setEmail(data);
+    setModalIsVisible(false);
   }
 
-  // Função para enviar o e-mail
   async function sendEmail() {
     if (!email) return;
 
     try {
-      // Use localhost ou o IP da sua rede local se precisar
-      const response = await axios.post('http://127.0.0.1:3000/send-email', { email });
+      const response = await axios.post(`${API_URL}/send-email`, { email });
       if (response.data.success) {
         Alert.alert("Sucesso", "E-mail enviado com sucesso!");
       } else {
@@ -52,13 +50,10 @@ export default function QRCodeScannerScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Escaneie o QR Code</Text>
-      <Text style={styles.subtitle}>Posicione o QR Code dentro da área abaixo</Text>
-
       <TouchableOpacity style={styles.startButton} onPress={handleOpenCamera}>
         <Text style={styles.startButtonText}>Iniciar Leitura</Text>
       </TouchableOpacity>
 
-      {/* Modal de Câmera */}
       <Modal visible={modalIsVisible} transparent={true}>
         <View style={styles.overlay}>
           <CameraView
@@ -72,7 +67,6 @@ export default function QRCodeScannerScreen() {
             }}
           />
 
-          {/* Botão de fechar no canto superior direito */}
           <TouchableOpacity
             style={styles.closeButton}
             onPress={() => setModalIsVisible(false)}
@@ -82,7 +76,6 @@ export default function QRCodeScannerScreen() {
         </View>
       </Modal>
 
-      {/* Mostrar botão para enviar e-mail após QR Code ser lido */}
       {email && (
         <View style={styles.emailContainer}>
           <Text style={styles.emailText}>E-mail detectado: {email}</Text>
