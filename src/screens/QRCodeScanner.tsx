@@ -1,35 +1,28 @@
-import React, { useState, useRef } from "react";
-import { StyleSheet, View, Text, Modal, TouchableOpacity, Alert } from "react-native";
+import React, { useState, useRef, useEffect } from "react";
+import { StyleSheet, View, Text, TouchableOpacity, Alert } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
 import axios from "axios";
 
-const API_URL = "https://dta-qrcode.onrender.com"; 
+const API_URL = "https://dta-qrcode.onrender.com";
 
 export default function QRCodeScannerScreen() {
-  const [modalIsVisible, setModalIsVisible] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
   const [email, setEmail] = useState<string | null>(null);
   const qrCodeLock = useRef(false);
+  const [isScanning, setIsScanning] = useState(false);
 
-  async function handleOpenCamera() {
-    try {
+  useEffect(() => {
+    (async () => {
       const { granted } = await requestPermission();
-
       if (!granted) {
-        return Alert.alert("Câmera", "Você precisa habilitar o uso da câmera");
+        Alert.alert("Câmera", "Você precisa habilitar o uso da câmera");
       }
-
-      setModalIsVisible(true);
-      qrCodeLock.current = false;
-    } catch (error) {
-      console.log(error);
-    }
-  }
+    })();
+  }, []);
 
   function handleQRCodeRead(data: string) {
     setEmail(data);
-    setModalIsVisible(false);
+    setIsScanning(false);
   }
 
   async function sendEmail() {
@@ -49,41 +42,37 @@ export default function QRCodeScannerScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Escaneie o QR Code</Text>
-      <TouchableOpacity style={styles.startButton} onPress={handleOpenCamera}>
-        <Text style={styles.startButtonText}>Iniciar Leitura</Text>
-      </TouchableOpacity>
+      <CameraView
+        style={styles.camera}
+        facing="back"
+        onBarcodeScanned={({ data }) => {
+          if (isScanning && data && !qrCodeLock.current) {
+            qrCodeLock.current = true;
+            setTimeout(() => {
+              handleQRCodeRead(data);
+              qrCodeLock.current = false;
+            }, 500);
+          }
+        }}
+      />
+      <View style={styles.overlay}>
+        <Text style={styles.title}>
+          {email ? "QR Code Lido!" : "Posicione o QR Code na área"}
+        </Text>
 
-      <Modal visible={modalIsVisible} transparent={true}>
-        <View style={styles.overlay}>
-          <CameraView
-            style={styles.camera}
-            facing="back"
-            onBarcodeScanned={({ data }) => {
-              if (data && !qrCodeLock.current) {
-                qrCodeLock.current = true;
-                setTimeout(() => handleQRCodeRead(data), 500);
-              }
-            }}
-          />
-
+        {!email ? (
           <TouchableOpacity
-            style={styles.closeButton}
-            onPress={() => setModalIsVisible(false)}
+            style={styles.scanButton}
+            onPress={() => setIsScanning(true)}
           >
-            <MaterialCommunityIcons name="close" size={30} color="white" />
+            <Text style={styles.scanButtonText}>Escanear</Text>
           </TouchableOpacity>
-        </View>
-      </Modal>
-
-      {email && (
-        <View style={styles.emailContainer}>
-          <Text style={styles.emailText}>E-mail detectado: {email}</Text>
+        ) : (
           <TouchableOpacity style={styles.sendButton} onPress={sendEmail}>
             <Text style={styles.sendButtonText}>Enviar E-mail</Text>
           </TouchableOpacity>
-        </View>
-      )}
+        )}
+      </View>
     </View>
   );
 }
@@ -91,71 +80,40 @@ export default function QRCodeScannerScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
+    backgroundColor: "#000",
+  },
+  camera: {
+    flex: 1,
+  },
+  overlay: {
+    position: "absolute",
+    bottom: 50,
+    width: "100%",
     alignItems: "center",
-    padding: 20,
-    backgroundColor: "#f7f7f7",
+    paddingHorizontal: 20,
   },
   title: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#333",
+    fontSize: 18,
+    color: "#fff",
     marginBottom: 20,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: "#777",
-    marginBottom: 40,
     textAlign: "center",
   },
-  startButton: {
+  scanButton: {
     width: "80%",
     padding: 15,
-    backgroundColor: "#4CAF50", 
+    backgroundColor: "#4CAF50",
     borderRadius: 10,
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
   },
-  startButtonText: {
+  scanButtonText: {
     fontSize: 18,
     color: "#fff",
     fontWeight: "bold",
   },
-  overlay: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-  },
-  camera: {
-    width: "100%",
-    height: "100%",
-  },
-  closeButton: {
-    position: "absolute",
-    top: 40,
-    right: 20,
-    backgroundColor: "#333", 
-    padding: 10,
-    borderRadius: 50,
-    opacity: 0.7,
-    zIndex: 10,
-  },
-  emailContainer: {
-    marginTop: 20,
-    alignItems: "center",
-  },
-  emailText: {
-    fontSize: 16,
-    color: "#333",
-    marginBottom: 10,
-  },
   sendButton: {
+    width: "80%",
     padding: 15,
-    backgroundColor: "#007BFF", 
+    backgroundColor: "#007BFF",
     borderRadius: 10,
     alignItems: "center",
   },
