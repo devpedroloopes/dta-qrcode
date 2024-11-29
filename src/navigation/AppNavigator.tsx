@@ -14,7 +14,10 @@ const Stack = createStackNavigator<RootStackParamList>();
 export default function AppNavigator() {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Login">
+      <Stack.Navigator 
+        initialRouteName="Login"
+        screenOptions={{ headerShown: false }} // Remove o header de todas as telas
+      >
         <Stack.Screen name="Login" component={Login} />
         <Stack.Screen name="QRCodeScanner" component={QRCodeScanner} />
       </Stack.Navigator>
