@@ -23,13 +23,12 @@ const transporter = nodemailer.createTransport({
 function formatDateTime() {
   const now = new Date();
   return new Intl.DateTimeFormat("pt-BR", {
-    timeZone: "America/Sao_Paulo", // Configurando explicitamente o fuso horário
+    timeZone: "America/Sao_Paulo",
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
-    second: "2-digit",
   }).format(now);
 }
 
@@ -45,34 +44,23 @@ app.post("/send-email", async (req, res) => {
   const mailOptions = {
     from: process.env.USER_EMAIL,
     to: email,
-    subject: "Aviso de Visita Técnica",
+    subject: "Confirmação de Visita Técnica",
     text: `Olá,
 
-O técnico realizou a visita no local.
+A visita técnica foi realizada com sucesso.
 
-Detalhes da visita:
-- Data e Hora do Escaneamento: ${dateTime}
+Data e Hora: ${dateTime}
 
 Atenciosamente,
 Equipe Técnica`,
     html: `
-      <div style="font-family: Arial, Helvetica, sans-serif; color: #333; line-height: 1.6;">
-        <h2 style="color: #007BFF;">Aviso de Visita Técnica</h2>
+      <div style="font-family: Arial, sans-serif; color: #333; padding: 20px; line-height: 1.6; border: 1px solid #ddd; border-radius: 8px; max-width: 600px; margin: auto;">
+        <h3 style="color: #333; text-align: center; margin-bottom: 20px;">Confirmação de Visita Técnica</h3>
         <p>Olá,</p>
-        <p>O técnico realizou a visita no local.</p>
-        <p><strong>Detalhes da visita:</strong></p>
-        <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
-          <tr style="background-color: #f2f2f2;">
-            <td style="padding: 8px; border: 1px solid #ddd; text-align: left;">
-              <strong>Data e Hora do Escaneamento:</strong>
-            </td>
-            <td style="padding: 8px; border: 1px solid #ddd; text-align: left;">
-              ${dateTime}
-            </td>
-          </tr>
-        </table>
+        <p>A visita técnica foi realizada com sucesso.</p>
+        <p><strong>Data e Hora:</strong> ${dateTime}</p>
         <p>Atenciosamente,</p>
-        <p style="font-weight: bold; color: #007BFF;">Equipe Técnica</p>
+        <p><strong>Equipe Técnica</strong></p>
       </div>
     `,
   };
