@@ -19,18 +19,18 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// Função para formatar data e hora
+// Função para formatar data e hora no fuso horário correto
 function formatDateTime() {
   const now = new Date();
-  const options = {
+  return new Intl.DateTimeFormat("pt-BR", {
+    timeZone: "America/Sao_Paulo", // Configurando explicitamente o fuso horário
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
-  };
-  return now.toLocaleDateString("pt-BR", options);
+  }).format(now);
 }
 
 // Endpoint para envio de e-mail
