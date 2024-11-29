@@ -55,14 +55,26 @@ Detalhes da visita:
 
 Atenciosamente,
 Equipe Técnica`,
-    html: `<p>Olá,</p>
-      <p>O técnico realizou a visita no local.</p>
-      <p><strong>Detalhes da visita:</strong></p>
-      <ul>
-        <li><strong>Data e Hora do Escaneamento:</strong> ${dateTime}</li>
-      </ul>
-      <p>Atenciosamente,</p>
-      <p>Equipe Técnica</p>`,
+    html: `
+      <div style="font-family: Arial, Helvetica, sans-serif; color: #333; line-height: 1.6;">
+        <h2 style="color: #007BFF;">Aviso de Visita Técnica</h2>
+        <p>Olá,</p>
+        <p>O técnico realizou a visita no local.</p>
+        <p><strong>Detalhes da visita:</strong></p>
+        <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+          <tr style="background-color: #f2f2f2;">
+            <td style="padding: 8px; border: 1px solid #ddd; text-align: left;">
+              <strong>Data e Hora do Escaneamento:</strong>
+            </td>
+            <td style="padding: 8px; border: 1px solid #ddd; text-align: left;">
+              ${dateTime}
+            </td>
+          </tr>
+        </table>
+        <p>Atenciosamente,</p>
+        <p style="font-weight: bold; color: #007BFF;">Equipe Técnica</p>
+      </div>
+    `,
   };
 
   try {

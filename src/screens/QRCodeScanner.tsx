@@ -5,6 +5,7 @@ import {
   Text,
   Modal,
   TouchableOpacity,
+  Animated,
   Alert,
 } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
@@ -17,6 +18,8 @@ export default function QRCodeScannerScreen() {
   const [modalIsVisible, setModalIsVisible] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
   const [email, setEmail] = useState<string | null>(null);
+  const [showCustomAlert, setShowCustomAlert] = useState(false);
+  const fadeAnim = useRef(new Animated.Value(0)).current; // Animação para o alerta
   const qrCodeLock = useRef(false);
 
   async function handleOpenCamera() {
@@ -42,15 +45,32 @@ export default function QRCodeScannerScreen() {
   async function sendEmail() {
     if (!email) return;
 
+    // Exibir alerta customizado
+    setShowCustomAlert(true);
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 500,
+      useNativeDriver: true,
+    }).start();
+
+    // Remover o botão e ocultar alerta após alguns segundos
+    setTimeout(() => {
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 500,
+        useNativeDriver: true,
+      }).start(() => setShowCustomAlert(false));
+      setEmail(null); // Remover o botão
+    }, 4000);
+
     try {
+      // Enviar o e-mail para o servidor
       const response = await axios.post(`${API_URL}/send-email`, { email });
-      if (response.data.success) {
-        Alert.alert("Sucesso", "E-mail enviado com sucesso!");
-      } else {
-        Alert.alert("Erro", "Falha ao enviar o e-mail");
+      if (!response.data.success) {
+        console.error("Erro no servidor ao enviar o e-mail");
       }
     } catch (error) {
-      Alert.alert("Erro", "Erro ao comunicar com o servidor");
+      console.error("Erro ao comunicar com o servidor:", error);
     }
   }
 
@@ -90,11 +110,21 @@ export default function QRCodeScannerScreen() {
 
       {email && (
         <View style={styles.emailContainer}>
-          <Text style={styles.emailText}>E-mail escaneado: {email}</Text>
-          <TouchableOpacity style={styles.sendButton} onPress={sendEmail}>
-            <Text style={styles.sendButtonText}>Enviar E-mail</Text>
+          <TouchableOpacity style={styles.actionButton} onPress={sendEmail}>
+            <Text style={styles.actionButtonText}>Enviar E-mail</Text>
           </TouchableOpacity>
         </View>
+      )}
+
+      {/* Alerta customizado */}
+      {showCustomAlert && (
+        <Animated.View
+          style={[styles.customAlert, { opacity: fadeAnim }]}
+        >
+          <Text style={styles.alertText}>
+            E-mail enviado! Ele pode chegar em até 3 minutos.
+          </Text>
+        </Animated.View>
       )}
     </View>
   );
@@ -105,33 +135,33 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#ffffff",
+    backgroundColor: "#f9f9f9",
     padding: 20,
   },
   title: {
     fontSize: 28,
     fontWeight: "bold",
-    color: "#333333",
+    color: "#333",
     marginBottom: 10,
+    textAlign: "center",
   },
   subtitle: {
     fontSize: 16,
-    color: "#666666",
+    color: "#666",
     marginBottom: 20,
+    textAlign: "center",
   },
   button: {
+    width: "80%",
     padding: 15,
     backgroundColor: "#007BFF",
-    borderRadius: 10,
+    borderRadius: 8,
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
+    elevation: 2,
   },
   buttonText: {
     fontSize: 18,
-    color: "#ffffff",
+    color: "#fff",
     fontWeight: "bold",
   },
   camera: {
@@ -145,7 +175,7 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
   },
   scanText: {
-    color: "#ffffff",
+    color: "#fff",
     fontSize: 16,
     marginTop: 10,
     backgroundColor: "rgba(0, 0, 0, 0.6)",
@@ -160,32 +190,48 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   iconButton: {
-    width: 60,
-    height: 60,
+    width: 50,
+    height: 50,
     backgroundColor: "rgba(0, 0, 0, 0.6)",
-    borderRadius: 30,
+    borderRadius: 25,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 20,
   },
   emailContainer: {
     marginTop: 20,
-    alignItems: "center",
+    width: "80%",
   },
-  emailText: {
-    fontSize: 16,
-    color: "#666666",
-    marginBottom: 10,
-  },
-  sendButton: {
+  actionButton: {
     padding: 15,
     backgroundColor: "#4CAF50",
+    borderRadius: 8,
+    alignItems: "center",
+    width: "100%",
+  },
+  actionButtonText: {
+    fontSize: 18,
+    color: "#fff",
+    fontWeight: "bold",
+  },
+  customAlert: {
+    position: "absolute",
+    bottom: 50,
+    backgroundColor: "#333",
+    padding: 15,
     borderRadius: 10,
     alignItems: "center",
+    justifyContent: "center",
+    alignSelf: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    width: "80%",
   },
-  sendButtonText: {
-    fontSize: 18,
-    color: "#ffffff",
-    fontWeight: "bold",
+  alertText: {
+    fontSize: 16,
+    color: "#fff",
+    textAlign: "center",
   },
 });
