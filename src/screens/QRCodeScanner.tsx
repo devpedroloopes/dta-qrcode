@@ -17,7 +17,7 @@ const API_URL = "https://dta-qrcode.onrender.com";
 export default function QRCodeScannerScreen() {
   const [modalIsVisible, setModalIsVisible] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
-  const [email, setEmail] = useState<{ to: string; subject: string; body: string } | null>(null);
+  const [email, setEmail] = useState<string | null>(null);
   const [showCustomAlert, setShowCustomAlert] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current; // Animação para o alerta
   const qrCodeLock = useRef(false);
@@ -37,36 +37,15 @@ export default function QRCodeScannerScreen() {
     }
   }
 
-  function parseMATMSG(qrCodeData: string) {
-    const match = qrCodeData.match(
-      /^MATMSG:TO:([^;]+);SUB:([^;]*);BODY:([^;]*);;$/
-    );
-
-    if (match) {
-      const [, to, subject, body] = match;
-      return { to, subject, body };
-    }
-
-    return null; // Retorna null se o formato não for compatível
-  }
-
   function handleQRCodeRead(data: string) {
-    const parsedData = parseMATMSG(data);
-
-    if (!parsedData) {
-      Alert.alert("Erro", "O QR Code escaneado não está no formato esperado.");
-      return;
-    }
-
-    const { to, subject, body } = parsedData;
-
-    setEmail({ to, subject, body });
+    setEmail(data);
     setModalIsVisible(false);
   }
 
   async function sendEmail() {
     if (!email) return;
 
+    // Exibir alerta customizado
     setShowCustomAlert(true);
     Animated.timing(fadeAnim, {
       toValue: 1,
@@ -74,17 +53,19 @@ export default function QRCodeScannerScreen() {
       useNativeDriver: true,
     }).start();
 
+    // Remover o botão e ocultar alerta após alguns segundos
     setTimeout(() => {
       Animated.timing(fadeAnim, {
         toValue: 0,
         duration: 500,
         useNativeDriver: true,
       }).start(() => setShowCustomAlert(false));
-      setEmail(null);
-    }, 4000);
+      setEmail(null); // Remover o botão
+    }, 3000);
 
     try {
-      const response = await axios.post(`${API_URL}/send-email`, email);
+      // Enviar o e-mail para o servidor
+      const response = await axios.post(`${API_URL}/send-email`, { email });
       if (!response.data.success) {
         console.error("Erro no servidor ao enviar o e-mail");
       }
