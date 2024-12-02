@@ -18,6 +18,8 @@ export default function QRCodeScannerScreen() {
   const [modalIsVisible, setModalIsVisible] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
   const [email, setEmail] = useState<string | null>(null);
+  const [subject, setSubject] = useState<string | null>(null);
+  const [body, setBody] = useState<string | null>(null);
   const [showCustomAlert, setShowCustomAlert] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current; // Animação para o alerta
   const qrCodeLock = useRef(false);
@@ -37,32 +39,58 @@ export default function QRCodeScannerScreen() {
     }
   }
 
+  function parseQRCode(data: string) {
+    console.log("Dados do QR Code lidos:", data);
+
+    // Dividir os dados em partes usando o ponto e vírgula como separador
+    const fields = data.split(";");
+    let email = "";
+    let subject = "";
+    let body = "";
+
+    // Loop para identificar os campos
+    fields.forEach((field) => {
+      if (field.startsWith("email:")) {
+        email = field.replace("email:", "").trim();
+      } else if (field.startsWith("assunto:")) {
+        subject = field.replace("assunto:", "").trim();
+      } else if (field.startsWith("local:")) {
+        body = field.replace("local:", "").trim();
+      }
+    });
+
+    // Verificar se todos os campos foram encontrados
+    if (email && subject && body) {
+      return { email, subject, body };
+    } else {
+      return null; // Se algum campo não for encontrado, retornar null
+    }
+  }
+
   function handleQRCodeRead(data: string) {
-    const qrCodeData = parseQRCode(data);
+    const parsedData = parseQRCode(data);
 
-    if (qrCodeData) {
-      const { email, subject, body } = qrCodeData;
+    if (parsedData) {
+      const { email, subject, body } = parsedData;
 
+      // Verificar se todos os campos estão presentes
+      if (!email || !subject || !body) {
+        Alert.alert("Erro", "QR Code incompleto ou inválido!");
+        return;
+      }
+
+      // Armazenar os dados para envio
       setEmail(email);
-      setModalIsVisible(false);
-
-      sendEmail({ email, subject, body });
+      setSubject(subject);
+      setBody(body);
     } else {
       Alert.alert("Erro", "QR Code inválido!");
     }
+
+    setModalIsVisible(false);
   }
 
-  // Função para interpretar o QR Code no formato MATMSG
-  function parseQRCode(data: string) {
-    const match = /MATMSG:TO:(.*?);SUB:(.*?);BODY:(.*?);;/i.exec(data);
-    if (match) {
-      const [, email, subject, body] = match;
-      return { email, subject, body };
-    }
-    return null;
-  }
-
-  async function sendEmail({ email, subject, body }: { email: string; subject: string; body: string }) {
+  async function sendEmail() {
     if (!email || !subject || !body) return;
 
     // Exibir alerta customizado
@@ -85,7 +113,11 @@ export default function QRCodeScannerScreen() {
 
     try {
       // Enviar o e-mail para o servidor
-      const response = await axios.post(`${API_URL}/send-email`, { email, subject, body });
+      const response = await axios.post(`${API_URL}/send-email`, {
+        email,
+        subject,
+        body,
+      });
       if (!response.data.success) {
         console.error("Erro no servidor ao enviar o e-mail");
       }
@@ -127,6 +159,14 @@ export default function QRCodeScannerScreen() {
           </View>
         </CameraView>
       </Modal>
+
+      {email && (
+        <View style={styles.emailContainer}>
+          <TouchableOpacity style={styles.actionButton} onPress={sendEmail}>
+            <Text style={styles.actionButtonText}>Enviar E-mail</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* Alerta customizado */}
       {showCustomAlert && (
