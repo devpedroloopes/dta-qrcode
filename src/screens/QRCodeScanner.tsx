@@ -38,12 +38,32 @@ export default function QRCodeScannerScreen() {
   }
 
   function handleQRCodeRead(data: string) {
-    setEmail(data);
-    setModalIsVisible(false);
+    const qrCodeData = parseQRCode(data);
+
+    if (qrCodeData) {
+      const { email, subject, body } = qrCodeData;
+
+      setEmail(email);
+      setModalIsVisible(false);
+
+      sendEmail({ email, subject, body });
+    } else {
+      Alert.alert("Erro", "QR Code inválido!");
+    }
   }
 
-  async function sendEmail() {
-    if (!email) return;
+  // Função para interpretar o QR Code no formato MATMSG
+  function parseQRCode(data: string) {
+    const match = /MATMSG:TO:(.*?);SUB:(.*?);BODY:(.*?);;/i.exec(data);
+    if (match) {
+      const [, email, subject, body] = match;
+      return { email, subject, body };
+    }
+    return null;
+  }
+
+  async function sendEmail({ email, subject, body }: { email: string; subject: string; body: string }) {
+    if (!email || !subject || !body) return;
 
     // Exibir alerta customizado
     setShowCustomAlert(true);
@@ -65,7 +85,7 @@ export default function QRCodeScannerScreen() {
 
     try {
       // Enviar o e-mail para o servidor
-      const response = await axios.post(`${API_URL}/send-email`, { email });
+      const response = await axios.post(`${API_URL}/send-email`, { email, subject, body });
       if (!response.data.success) {
         console.error("Erro no servidor ao enviar o e-mail");
       }
@@ -107,14 +127,6 @@ export default function QRCodeScannerScreen() {
           </View>
         </CameraView>
       </Modal>
-
-      {email && (
-        <View style={styles.emailContainer}>
-          <TouchableOpacity style={styles.actionButton} onPress={sendEmail}>
-            <Text style={styles.actionButtonText}>Enviar E-mail</Text>
-          </TouchableOpacity>
-        </View>
-      )}
 
       {/* Alerta customizado */}
       {showCustomAlert && (

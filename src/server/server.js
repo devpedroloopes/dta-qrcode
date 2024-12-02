@@ -34,20 +34,23 @@ function formatDateTime() {
 
 // Endpoint para envio de e-mail
 app.post("/send-email", async (req, res) => {
-  const { email } = req.body;
+  const { email, subject, body } = req.body;
 
-  if (!email) {
-    return res.status(400).json({ success: false, message: "E-mail é obrigatório!" });
+  if (!email || !subject || !body) {
+    return res.status(400).json({
+      success: false,
+      message: "E-mail, assunto e local são obrigatórios!",
+    });
   }
 
   const dateTime = formatDateTime(); // Capturar a data e hora no momento do envio
   const mailOptions = {
     from: process.env.USER_EMAIL,
     to: email,
-    subject: "Confirmação de Visita Técnica",
+    subject: subject,
     text: `Olá,
 
-A visita técnica foi realizada com sucesso.
+${body}
 
 Data e Hora: ${dateTime}
 
@@ -55,9 +58,9 @@ Atenciosamente,
 Equipe Técnica`,
     html: `
       <div style="font-family: Arial, sans-serif; color: #333; padding: 20px; line-height: 1.6; border: 1px solid #ddd; border-radius: 8px; max-width: 600px; margin: auto;">
-        <h3 style="color: #333; text-align: center; margin-bottom: 20px;">Confirmação de Visita Técnica</h3>
+        <h3 style="color: #333; text-align: center; margin-bottom: 20px;">${subject}</h3>
         <p>Olá,</p>
-        <p>A visita técnica foi realizada com sucesso.</p>
+        <p>${body}</p>
         <p><strong>Data e Hora:</strong> ${dateTime}</p>
         <p>Atenciosamente,</p>
         <p><strong>Equipe Técnica</strong></p>
