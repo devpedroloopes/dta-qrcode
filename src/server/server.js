@@ -37,19 +37,27 @@ app.post("/send-email", async (req, res) => {
   const { email } = req.body;
 
   if (!email) {
-    return res.status(400).json({ success: false, message: "E-mail é obrigatório!" });
+    return res.status(400).json({ success: false, message: "Dados do QR Code são obrigatórios!" });
+  }
+
+  // Separar e-mail, assunto e local do texto recebido
+  const [recipientEmail, subject, location] = email.split('\n').map((item) => item.trim());
+
+  if (!recipientEmail || !subject || !location) {
+    return res.status(400).json({ success: false, message: "Estrutura do QR Code inválida!" });
   }
 
   const dateTime = formatDateTime(); // Capturar a data e hora no momento do envio
   const mailOptions = {
     from: process.env.USER_EMAIL,
-    to: email,
-    subject: "Confirmação de Visita Técnica",
+    to: recipientEmail,
+    subject: subject || "Confirmação de Visita Técnica",
     text: `Olá,
 
 A visita técnica foi realizada com sucesso.
 
 Data e Hora: ${dateTime}
+Local: ${location}
 
 Atenciosamente,
 Equipe Técnica`,
@@ -59,6 +67,7 @@ Equipe Técnica`,
         <p>Olá,</p>
         <p>A visita técnica foi realizada com sucesso.</p>
         <p><strong>Data e Hora:</strong> ${dateTime}</p>
+        <p><strong>Local:</strong> ${location}</p>
         <p>Atenciosamente,</p>
         <p><strong>Equipe Técnica</strong></p>
       </div>

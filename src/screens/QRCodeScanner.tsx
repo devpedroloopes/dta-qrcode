@@ -19,7 +19,7 @@ export default function QRCodeScannerScreen() {
   const [permission, requestPermission] = useCameraPermissions();
   const [email, setEmail] = useState<string | null>(null);
   const [showCustomAlert, setShowCustomAlert] = useState(false);
-  const fadeAnim = useRef(new Animated.Value(0)).current; // Animação para o alerta
+  const fadeAnim = useRef(new Animated.Value(0)).current;
   const qrCodeLock = useRef(false);
 
   async function handleOpenCamera() {
@@ -38,6 +38,11 @@ export default function QRCodeScannerScreen() {
   }
 
   function handleQRCodeRead(data: string) {
+    if (!data.includes("\n")) {
+      Alert.alert("QR Code inválido", "Certifique-se de que o QR Code possui a estrutura correta.");
+      return;
+    }
+
     setEmail(data);
     setModalIsVisible(false);
   }
@@ -53,18 +58,16 @@ export default function QRCodeScannerScreen() {
       useNativeDriver: true,
     }).start();
 
-    // Remover o botão e ocultar alerta após alguns segundos
     setTimeout(() => {
       Animated.timing(fadeAnim, {
         toValue: 0,
         duration: 500,
         useNativeDriver: true,
       }).start(() => setShowCustomAlert(false));
-      setEmail(null); // Remover o botão
+      setEmail(null);
     }, 3000);
 
     try {
-      // Enviar o e-mail para o servidor
       const response = await axios.post(`${API_URL}/send-email`, { email });
       if (!response.data.success) {
         console.error("Erro no servidor ao enviar o e-mail");
@@ -77,9 +80,6 @@ export default function QRCodeScannerScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Leitor de QR Code</Text>
-      <Text style={styles.subtitle}>
-        Clique no botão abaixo para iniciar a leitura.
-      </Text>
       <TouchableOpacity style={styles.button} onPress={handleOpenCamera}>
         <Text style={styles.buttonText}>Iniciar Leitura</Text>
       </TouchableOpacity>
@@ -96,7 +96,6 @@ export default function QRCodeScannerScreen() {
           }}
         >
           <View style={styles.overlay}>
-            <Text style={styles.scanText}>Posicione o QR Code na moldura</Text>
             <View style={styles.frame} />
             <TouchableOpacity
               style={styles.iconButton}
@@ -116,11 +115,8 @@ export default function QRCodeScannerScreen() {
         </View>
       )}
 
-      {/* Alerta customizado */}
       {showCustomAlert && (
-        <Animated.View
-          style={[styles.customAlert, { opacity: fadeAnim }]}
-        >
+        <Animated.View style={[styles.customAlert, { opacity: fadeAnim }]}>
           <Text style={styles.alertText}>
             E-mail enviado! Ele pode chegar em até 3 minutos.
           </Text>
