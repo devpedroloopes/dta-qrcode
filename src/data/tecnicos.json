@@ -1,14 +1,10 @@
 [
   {
     "name": "Pedro",
-    "password": "123",
-    "email": "pedro.hsl2003@gmail.com",
-    "passwordEmail": "lygv qhvk bkgo ljpu"
+    "password": "123"
   },
   {
     "name": "Igor",
-    "password": "321",
-    "email": "igor.hsl2003@gmail.com",
-    "passwordEmail": "uixw bscu njlp pxzv"
+    "password": "321"
   }
 ]
