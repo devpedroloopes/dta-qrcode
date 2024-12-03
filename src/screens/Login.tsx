@@ -7,6 +7,7 @@ import {
   Alert,
   TouchableOpacity,
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../navigation/AppNavigator";
@@ -20,14 +21,17 @@ export default function LoginScreen() {
   const [password, setPassword] = useState<string>("");
   const navigation = useNavigation<LoginScreenNavigationProp>();
 
-  function handleLogin() {
+  async function handleLogin() {
     const technician = technicians.find(
       (tech: { name: string; password: string }) =>
         tech.name === name && tech.password === password
     );
 
     if (technician) {
-      navigation.navigate("QRCodeScanner");
+      // Salvar técnico logado no AsyncStorage
+      await AsyncStorage.setItem("loggedTechnician", JSON.stringify(technician));
+
+      navigation.navigate("QRCodeScanner"); // Navegar para a próxima tela
     } else {
       Alert.alert("Erro", "Nome ou senha inválidos.");
     }

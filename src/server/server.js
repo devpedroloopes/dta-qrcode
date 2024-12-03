@@ -34,10 +34,10 @@ function formatDateTime() {
 
 // Endpoint para envio de e-mail
 app.post("/send-email", async (req, res) => {
-  const { email } = req.body;
+  const { email, technicianName } = req.body; // Receber nome do técnico no corpo da requisição
 
-  if (!email) {
-    return res.status(400).json({ success: false, message: "Dados do QR Code são obrigatórios!" });
+  if (!email || !technicianName) {
+    return res.status(400).json({ success: false, message: "Dados do QR Code e nome do técnico são obrigatórios!" });
   }
 
   // Separar e-mail, assunto e local do texto recebido
@@ -60,7 +60,7 @@ Data e Hora: ${dateTime}
 Local: ${location}
 
 Atenciosamente,
-Equipe Técnica`,
+Técnico ${technicianName}`, // Substituir "Equipe Técnica" pelo nome do técnico
     html: `
       <div style="font-family: Arial, sans-serif; color: #333; padding: 20px; line-height: 1.6; border: 1px solid #ddd; border-radius: 8px; max-width: 600px; margin: auto;">
         <h3 style="color: #333; text-align: center; margin-bottom: 20px;">Confirmação de Visita Técnica</h3>
@@ -69,7 +69,7 @@ Equipe Técnica`,
         <p><strong>Data e Hora:</strong> ${dateTime}</p>
         <p><strong>Local:</strong> ${location}</p>
         <p>Atenciosamente,</p>
-        <p><strong>Equipe Técnica</strong></p>
+        <p><strong>Técnico ${technicianName}</strong></p> <!-- Nome do técnico no e-mail -->
       </div>
     `,
   };

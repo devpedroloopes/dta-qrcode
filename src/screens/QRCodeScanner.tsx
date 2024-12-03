@@ -11,6 +11,7 @@ import {
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const API_URL = "https://dta-qrcode.onrender.com";
 
@@ -21,6 +22,19 @@ export default function QRCodeScannerScreen() {
   const [showCustomAlert, setShowCustomAlert] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const qrCodeLock = useRef(false);
+  const [technicianName, setTechnicianName] = useState<string | null>(null);
+
+  // Carregar nome do técnico logado do AsyncStorage
+  React.useEffect(() => {
+    const loadTechnicianName = async () => {
+      const technician = await AsyncStorage.getItem("loggedTechnician");
+      if (technician) {
+        const technicianData = JSON.parse(technician);
+        setTechnicianName(technicianData.name); // Define o nome do técnico
+      }
+    };
+    loadTechnicianName();
+  }, []);
 
   async function handleOpenCamera() {
     try {
@@ -48,7 +62,7 @@ export default function QRCodeScannerScreen() {
   }
 
   async function sendEmail() {
-    if (!email) return;
+    if (!email || !technicianName) return;
 
     // Exibir alerta customizado
     setShowCustomAlert(true);
@@ -68,7 +82,10 @@ export default function QRCodeScannerScreen() {
     }, 3000);
 
     try {
-      const response = await axios.post(`${API_URL}/send-email`, { email });
+      const response = await axios.post(`${API_URL}/send-email`, {
+        email,
+        technicianName, // Enviar o nome do técnico no corpo da requisição
+      });
       if (!response.data.success) {
         console.error("Erro no servidor ao enviar o e-mail");
       }
