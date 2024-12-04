@@ -24,39 +24,31 @@ export default function QRCodeScannerScreen() {
   const qrCodeLock = useRef(false);
   const [technicianName, setTechnicianName] = useState<string | null>(null);
 
-  // Carregar nome do técnico logado do AsyncStorage
   React.useEffect(() => {
     const loadTechnicianName = async () => {
       const technician = await AsyncStorage.getItem("loggedTechnician");
       if (technician) {
         const technicianData = JSON.parse(technician);
-        setTechnicianName(technicianData.name); // Define o nome do técnico
+        setTechnicianName(technicianData.name);
       }
     };
     loadTechnicianName();
   }, []);
 
   async function handleOpenCamera() {
-    try {
-      const { granted } = await requestPermission();
-
-      if (!granted) {
-        return Alert.alert("Câmera", "Você precisa habilitar o uso da câmera");
-      }
-
-      setModalIsVisible(true);
-      qrCodeLock.current = false;
-    } catch (error) {
-      console.error(error);
+    const { granted } = await requestPermission();
+    if (!granted) {
+      return Alert.alert("Permissão Necessária", "Habilite a câmera para continuar.");
     }
+    setModalIsVisible(true);
+    qrCodeLock.current = false;
   }
 
   function handleQRCodeRead(data: string) {
     if (!data.includes("\n")) {
-      Alert.alert("QR Code inválido", "Certifique-se de que o QR Code possui a estrutura correta.");
+      Alert.alert("QR Code Inválido", "O QR Code deve seguir a estrutura correta.");
       return;
     }
-
     setEmail(data);
     setModalIsVisible(false);
   }
@@ -64,7 +56,6 @@ export default function QRCodeScannerScreen() {
   async function sendEmail() {
     if (!email || !technicianName) return;
 
-    // Exibir alerta customizado
     setShowCustomAlert(true);
     Animated.timing(fadeAnim, {
       toValue: 1,
@@ -82,46 +73,43 @@ export default function QRCodeScannerScreen() {
     }, 3000);
 
     try {
-      const response = await axios.post(`${API_URL}/send-email`, {
-        email,
-        technicianName, // Enviar o nome do técnico no corpo da requisição
-      });
-      if (!response.data.success) {
-        console.error("Erro no servidor ao enviar o e-mail");
-      }
+      await axios.post(`${API_URL}/send-email`, { email, technicianName });
     } catch (error) {
-      console.error("Erro ao comunicar com o servidor:", error);
+      console.error("Erro ao enviar e-mail:", error);
     }
   }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Leitor de QR Code</Text>
+      <Text style={styles.title}>QR Code Scanner</Text>
       <TouchableOpacity style={styles.button} onPress={handleOpenCamera}>
+        <MaterialCommunityIcons name="qrcode-scan" size={24} color="white" />
         <Text style={styles.buttonText}>Iniciar Leitura</Text>
       </TouchableOpacity>
 
       <Modal visible={modalIsVisible} transparent={true}>
-        <CameraView
-          style={styles.camera}
-          facing="back"
-          onBarcodeScanned={({ data }) => {
-            if (data && !qrCodeLock.current) {
-              qrCodeLock.current = true;
-              setTimeout(() => handleQRCodeRead(data), 500);
-            }
-          }}
-        >
-          <View style={styles.overlay}>
-            <View style={styles.frame} />
-            <TouchableOpacity
-              style={styles.iconButton}
-              onPress={() => setModalIsVisible(false)}
-            >
-              <MaterialCommunityIcons name="close" size={28} color="white" />
-            </TouchableOpacity>
-          </View>
-        </CameraView>
+        <View style={styles.modalBackground}>
+          <CameraView
+            style={styles.camera}
+            facing="back"
+            onBarcodeScanned={({ data }) => {
+              if (data && !qrCodeLock.current) {
+                qrCodeLock.current = true;
+                setTimeout(() => handleQRCodeRead(data), 500);
+              }
+            }}
+          >
+            <View style={styles.overlay}>
+              <View style={styles.scanFrame} />
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => setModalIsVisible(false)}
+              >
+                <MaterialCommunityIcons name="close" size={32} color="#fff" />
+              </TouchableOpacity>
+            </View>
+          </CameraView>
+        </View>
       </Modal>
 
       {email && (
@@ -134,9 +122,7 @@ export default function QRCodeScannerScreen() {
 
       {showCustomAlert && (
         <Animated.View style={[styles.customAlert, { opacity: fadeAnim }]}>
-          <Text style={styles.alertText}>
-            E-mail enviado! Ele pode chegar em até 3 minutos.
-          </Text>
+          <Text style={styles.alertText}>E-mail enviado com sucesso!</Text>
         </Animated.View>
       )}
     </View>
@@ -146,105 +132,100 @@ export default function QRCodeScannerScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
+    backgroundColor: "#FAFAFA",
     alignItems: "center",
-    backgroundColor: "#f9f9f9",
+    justifyContent: "center",
     padding: 20,
   },
   title: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#333",
-    marginBottom: 10,
-    textAlign: "center",
-  },
-  subtitle: {
-    fontSize: 16,
-    color: "#666",
-    marginBottom: 20,
+    fontSize: 26,
+    fontWeight: "700",
+    color: "#222",
+    marginBottom: 30,
     textAlign: "center",
   },
   button: {
-    width: "80%",
-    padding: 15,
-    backgroundColor: "#007BFF",
-    borderRadius: 8,
+    flexDirection: "row",
     alignItems: "center",
-    elevation: 2,
+    justifyContent: "center",
+    backgroundColor: "#007BFF",
+    padding: 14,
+    borderRadius: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
   },
   buttonText: {
-    fontSize: 18,
     color: "#fff",
-    fontWeight: "bold",
+    fontSize: 18,
+    fontWeight: "500",
+    marginLeft: 8,
+  },
+  modalBackground: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    justifyContent: "center",
   },
   camera: {
     flex: 1,
   },
   overlay: {
     flex: 1,
-    justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: "transparent",
-    paddingVertical: 20,
-  },
-  scanText: {
-    color: "#fff",
-    fontSize: 16,
-    marginTop: 10,
-    backgroundColor: "rgba(0, 0, 0, 0.6)",
-    padding: 5,
-    borderRadius: 5,
-  },
-  frame: {
-    borderWidth: 3,
-    borderColor: "#00FF00",
-    width: 250,
-    height: 250,
-    borderRadius: 10,
-  },
-  iconButton: {
-    width: 50,
-    height: 50,
-    backgroundColor: "rgba(0, 0, 0, 0.6)",
-    borderRadius: 25,
     justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 20,
+  },
+  scanFrame: {
+    width: 260,
+    height: 260,
+    borderWidth: 2,
+    borderColor: "#4CAF50",
+    borderRadius: 16,
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+  },
+  closeButton: {
+    position: "absolute",
+    top: 40,
+    right: 20,
+    padding: 10,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    borderRadius: 20,
   },
   emailContainer: {
-    marginTop: 20,
-    width: "80%",
+    marginTop: 30,
+    width: "90%",
   },
   actionButton: {
-    padding: 15,
-    backgroundColor: "#4CAF50",
-    borderRadius: 8,
+    backgroundColor: "#28A745",
+    paddingVertical: 16,
+    borderRadius: 10,
     alignItems: "center",
-    width: "100%",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
   },
   actionButtonText: {
-    fontSize: 18,
     color: "#fff",
-    fontWeight: "bold",
+    fontSize: 18,
+    fontWeight: "600",
   },
   customAlert: {
     position: "absolute",
-    bottom: 50,
+    bottom: 60,
     backgroundColor: "#333",
-    padding: 15,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-    alignSelf: "center",
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 8,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 5,
-    width: "80%",
   },
   alertText: {
-    fontSize: 16,
     color: "#fff",
+    fontSize: 16,
     textAlign: "center",
   },
 });
