@@ -5,6 +5,14 @@
   },
   {
     "name": "Igor",
-    "password": "321"
+    "password": "123"
+  },
+  {
+    "name": "Ronaldo",
+    "password": "123"
+  },
+  {
+    "name": "Leonardo",
+    "password": "123"
   }
 ]
